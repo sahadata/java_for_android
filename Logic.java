@@ -1,115 +1,113 @@
-package mooc.vandy.java4android.birthdayprob.logic;
+package mooc.vandy.java4android.gate.logic;
 
-import mooc.vandy.java4android.birthdayprob.ui.OutputInterface;
-import java.util.*;
+import java.util.Random;
+
+import mooc.vandy.java4android.gate.ui.OutputInterface;
+
+import static mooc.vandy.java4android.gate.logic.ClassToTest.*;
+
 /**
- * This is where the logic of this App is centralized for this assignment.
+ * This is where the logic of this App is centralized for this
+ * assignment.
  * <p>
- * The assignments are designed this way to simplify your early Android interactions.
- * Designing the assignments this way allows you to first learn key 'Java' features without
- * having to beforehand learn the complexities of Android.
- *
+ * The assignments are designed this way to simplify your early
+ * Android interactions.  Designing the assignments this way allows
+ * you to first learn key 'Java' features without having to beforehand
+ * learn the complexities of Android.
  */
-public class Logic 
+public class Logic
        implements LogicInterface {
     /**
-     * This is a String to be used in Logging (if/when you decide you
-     * need it for debugging).
+     * Name of the class for the logger.
      */
     public static final String TAG =
         Logic.class.getName();
 
     /**
-     * This is the variable that stores our OutputInterface instance.
-     * <p>
-     * This is how we will interact with the User Interface
-     * [MainActivity.java].
-     * <p>
-     * It is called 'mOut' because it is where we 'out-put' our
-     * results. (It is also the 'in-put' from where we get values
-     * from, but it only needs 1 name, and 'mOut' is good enough).
-    */
-    OutputInterface mOut;
+     * Reference to the output.
+     */
+    private OutputInterface mOut;
 
     /**
-     * This is the constructor of this class.
-     * <p>
-     * It assigns the passed in [MainActivity] instance
-     * (which implements [OutputInterface]) to 'out'
+     * Select a predictable seed for the RandomNumber generator.
+     */
+    public final static int sRANDOM_SEED = 1234;
+
+    /**
+     * The maximum number of Gate objects.
+     */
+    private final static int sMAX_GATES = 4;
+
+    /**
+     * Constructor initializes the field.
      */
     public Logic(OutputInterface out){
         mOut = out;
     }
 
     /**
-     * This is the method that will (eventually) get called when the
-     * on-screen button labelled 'Process...' is pressed.
+     * This method will run after the on screen button is pressed.
      */
+    @Override
     public void process() {
-        int groupSize = mOut.getSize();
-        int simulationCount = mOut.getCount();
+        // Determine which class to test.
+        final ClassToTest classToTest =
+            mOut.getClassToTest();
 
-        if (groupSize < 2 || groupSize > 365) {
-            mOut.makeAlertToast("Group Size must be in the range 2-365.");
-            return;
+        // Generate a random number.
+        final Random randomNumber =
+            new Random(sRANDOM_SEED);
+
+        // This code here will only execute one 'case'(or section of
+        // code) based on the chosen drop down selection: 'Corral' or
+        // 'Herd'.
+        switch (classToTest) {
+        case Corral:
+            // We're going to test the FillTheCorral class on this
+            // run.
+            final FillTheCorral mFillTheCorral =
+                new FillTheCorral(mOut);
+
+            final Gate[] corral =
+                new Gate[sMAX_GATES];
+
+            for (int i = 0; i < corral.length; i++)
+                corral[i] = new Gate();
+
+            do {
+                // Randomly set the direction of each gate's swing in
+                // the corral array.
+                mFillTheCorral.setCorralGates(corral,
+                                              randomNumber);
+            } while (!mFillTheCorral.anyCorralAvailable(corral));
+
+            // Corral all the snails.
+            mFillTheCorral.corralSnails(corral, randomNumber);
+            break;
+
+        case Herd:
+            // We're going to test the HerdManager class on this run.
+
+            // Create two new Gate objects.
+            final Gate westGate = new Gate();
+            final Gate eastGate = new Gate();
+
+            mOut.println("West Gate: " + westGate);
+            mOut.println("East Gate: " + eastGate);
+
+            // Create a HerdManager that stores the output reference
+            // and the two Gate objects.
+            final HerdManager mHerdManager = 
+                new HerdManager(mOut,
+                                westGate,
+                                eastGate);
+
+            // Simulate the herd given a random number seed.
+            mHerdManager.simulateHerd(randomNumber);
+            break;
+        default:
+            // This should never occur!
+            throw new UnsupportedOperationException();
         }
-        if (simulationCount <= 0) {
-            mOut.makeAlertToast("Simulation Count must be positive.");
-            return;
-        }
-
-        double percent = calculate(groupSize, simulationCount);
-
-        // report results
-        mOut.println("For a group of " + groupSize + " people, the percentage");
-        mOut.println("of times that two people share the same birthday is");
-        mOut.println(String.format("%.2f%% of the time.", percent));
-
-    }
-
-    /**
-     * This is the method that actually does the calculations.
-     * <p>
-     * We provide you this method that way we can test it with unit testing.
-     */
-
-    // TODO - add your code here
-// for calculating the probability of being a pair of  same birthday in a number of simulation
-    public double calculate(int size, int count) {
-
-        // TODO -- add your code here
-        int accumulator =simulation(size,count);
-//       double probability=  (double)accumulator/count*100;
-//        return probability;
-        return accumulator*100.0/count;
-    }
-//    calculating the  number of times a pair of same of birthday has been encountered
-    public int simulation(int size,int count){
-        int accumulator = 0;
-
-        for(int j=1;j<=count;j++) {
-            List <Integer> arrlist = new ArrayList<Integer>();
-            Random rand = new Random();
-            rand.setSeed(j);
-           arrlist.clear();
-            for (int i = 0; i < size; i++) {
-                int temp = rand.nextInt(365);
-//                arrlist.add(temp);
-            if(arrlist.size()>0){
-                if(arrlist.contains(temp)){
-                   accumulator++;
-                   break;
-                }
-                else{
-                    arrlist.add(temp);
-                }
-            }
-            else {
-                arrlist.add(temp);
-            }
-            }
-        }
-//        mOut.println("The accumulator " + accumulator);
-        return accumulator;
     }
 }
